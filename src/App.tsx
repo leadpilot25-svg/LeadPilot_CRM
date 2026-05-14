@@ -1,9 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 import Dashboard from './pages/Dashboard';
 import PublicForm from './pages/PublicForm';
@@ -12,18 +8,22 @@ import Stats from './pages/Stats';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 
-// 🔒 AUTH CHECK
-function PrivateRoute({ children }: any) {
-  const user = localStorage.getItem("user");
+// 🔒 AUTH CHECK (AI STUDIO VERSION)
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
-  if (!user) return <Navigate to="/login" />;
+  useEffect(() => {
+    try {
+      const user = localStorage.getItem("user");
+      setIsAuth(!!user);
+    } catch {
+      setIsAuth(false);
+    }
+  }, []);
 
-  try {
-    JSON.parse(user);
-    return children;
-  } catch {
-    return <Navigate to="/login" />;
-  }
+  if (isAuth === null) return <div>Loading...</div>;
+
+  return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 export default function App() {
@@ -31,19 +31,18 @@ export default function App() {
     <Router>
       <Routes>
 
-        {/* 🔓 PUBLIC ROUTES */}
+        {/* 🔓 PUBLIC */}
         <Route path="/login" element={<Login />} />
         <Route path="/form" element={<PublicForm />} />
         <Route path="/lead-form" element={<PublicForm />} />
 
-        {/* 🔒 PROTECTED ROUTES */}
+        {/* 🔒 PRIVATE */}
         <Route path="/" element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
         } />
 
-        {/* ✅ SETTINGS (FIXED — NO ADMIN BLOCK) */}
         <Route path="/settings" element={
           <PrivateRoute>
             <Settings />
@@ -62,7 +61,7 @@ export default function App() {
           </PrivateRoute>
         } />
 
-        {/* 🚨 KEEP THIS LAST */}
+        {/* ✅ FALLBACK */}
         <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>

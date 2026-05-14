@@ -16,41 +16,23 @@ export default function Login() {
 
     const uname = username.toLowerCase().trim();
 
-    // 👑 ADMIN LOGIN
+    // 👑 ADMIN
     if (uname === 'admin' && password === '1234') {
-
-      // ✅ FIXED (store object, not string)
-      localStorage.setItem("user", JSON.stringify({
-        name: "Admin",
-        role: "admin"
-      }));
-
-      navigate('/');
+      localStorage.setItem("user", "admin");
+      navigate('/', { replace: true });
       return;
     }
 
-    // 🔥 AGENT MAPPING
-    let agentName = "";
-
-    if (uname === 'agent1') agentName = "Agent A";
-    else if (uname === 'agent2') agentName = "Agent B";
-
-    // ❌ INVALID AGENT
-    if (!agentName && password === '1234') {
-      alert("Invalid agent username (use agent1 or agent2)");
+    // 👥 AGENTS
+    if (uname === 'agent1' && password === '1234') {
+      localStorage.setItem("user", "Agent A");
+      navigate('/', { replace: true });
       return;
     }
 
-    // ✅ AGENT LOGIN
-    if (agentName && password === '1234') {
-
-      // ✅ FIXED (store object)
-      localStorage.setItem("user", JSON.stringify({
-        name: agentName,
-        role: "agent"
-      }));
-
-      navigate('/');
+    if (uname === 'agent2' && password === '1234') {
+      localStorage.setItem("user", "Agent B");
+      navigate('/', { replace: true });
       return;
     }
 
@@ -97,7 +79,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* LOGIN BUTTON */}
+        {/* LOGIN */}
         <button
           onClick={handleLogin}
           className="w-full bg-[#059669] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
@@ -105,7 +87,7 @@ export default function Login() {
           Login
         </button>
 
-        {/* INFO */}
+        {/* DEMO INFO */}
         <p className="text-xs text-gray-400 text-center mt-4">
           Admin: admin / 1234 <br />
           Agent A: agent1 / 1234 <br />
