@@ -1,56 +1,48 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState, ReactNode } from 'react';
 
-// Import your pages
+// Import your actual pages
 import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
 import PublicForm from './pages/PublicForm';
 import Settings from './pages/Settings';
 import Stats from './pages/Stats';
-import Login from './pages/Login';
 import Admin from './pages/Admin';
 
-// 🔒 REPAIRED AUTH CHECK
 function PrivateRoute({ children }: { children: ReactNode }) {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
   useEffect(() => {
-    try {
-      const user = localStorage.getItem("user");
-      if (!user) {
-        setIsAuth(false);
-        return;
-      }
-      JSON.parse(user);
-      setIsAuth(true);
-    } catch (e) {
+    const user = localStorage.getItem("user");
+    if (!user) {
       setIsAuth(false);
+    } else {
+      try {
+        JSON.parse(user);
+        setIsAuth(true);
+      } catch {
+        setIsAuth(false);
+      }
     }
   }, []);
 
-  // While checking, show nothing (prevents "flashing" login page)
-  if (isAuth === null) return null; 
-  
-  if (!isAuth) return <Navigate to="/login" replace />;
-
-  return <>{children}</>;
+  if (isAuth === null) return null; // Prevents "flashing" login page on refresh
+  return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        {/* PUBLIC ROUTES */}
         <Route path="/login" element={<Login />} />
         <Route path="/form" element={<PublicForm />} />
         <Route path="/lead-form" element={<PublicForm />} />
 
-        {/* PROTECTED ROUTES */}
         <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
         <Route path="/stats" element={<PrivateRoute><Stats /></PrivateRoute>} />
         <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
 
-        {/* CATCH-ALL REDIRECT */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
