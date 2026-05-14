@@ -16,14 +16,14 @@ export default function Login() {
 
     const uname = username.toLowerCase().trim();
 
-    // 🔥 GET CURRENT MODE
-    const mode = localStorage.getItem("mode") || "solo";
-
     // 👑 ADMIN LOGIN
     if (uname === 'admin' && password === '1234') {
 
-      // SAVE SIMPLE USER (IMPORTANT FIX)
-      localStorage.setItem("user", "admin");
+      // ✅ FIXED (store object, not string)
+      localStorage.setItem("user", JSON.stringify({
+        name: "Admin",
+        role: "admin"
+      }));
 
       navigate('/');
       return;
@@ -44,8 +44,11 @@ export default function Login() {
     // ✅ AGENT LOGIN
     if (agentName && password === '1234') {
 
-      // 🔥 SAVE ONLY NAME (VERY IMPORTANT)
-      localStorage.setItem("user", agentName);
+      // ✅ FIXED (store object)
+      localStorage.setItem("user", JSON.stringify({
+        name: agentName,
+        role: "agent"
+      }));
 
       navigate('/');
       return;
