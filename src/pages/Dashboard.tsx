@@ -4,9 +4,8 @@ import { Header } from '../components/Header';
 import { BottomNav } from '../components/BottomNav';
 import { LeadCard } from '../components/LeadCard';
 import { useLeads } from '../hooks/useLeads';
-import { Search, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Lead } from '../types';
-import { cn } from '../lib/utils';
 import { UpdateLeadModal } from '../components/UpdateLeadModal';
 import { AddLeadModal } from '../components/AddLeadModal';
 
@@ -17,7 +16,6 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // 🔥 MODE + USER
@@ -27,11 +25,7 @@ export default function Dashboard() {
   const filterParam = searchParams.get('filter') || 'All';
   const today = new Date().toISOString().split('T')[0];
 
-  const setFilter = (filter: string) => {
-    setSearchParams({ filter });
-  };
-
-  /* MODE SWITCH BUTTON */
+  /* SWITCH MODE */
   const switchMode = () => {
     const newMode = mode === "solo" ? "team" : "solo";
     localStorage.setItem("mode", newMode);
@@ -59,44 +53,18 @@ export default function Dashboard() {
     alert(`Assigned to ${agent}`);
   };
 
-  /* STATS */
-  const stats = useMemo(() => ({
-    overdue: leads.filter(l => l.followUp && l.followUp < today && l.status !== 'Done').length,
-    today: leads.filter(l => l.followUp === today && l.status !== 'Done').length,
-    upcoming: leads.filter(l => l.followUp && l.followUp > today && l.status !== 'Done').length,
-    done: leads.filter(l => l.status === 'Done').length,
-    total: leads.length,
-  }), [leads]);
-
-  /* ALERT */
-  const todayLeads = useMemo(() => {
-    return leads.filter(l => l.followUp === today && l.status !== 'Done');
-  }, [leads]);
-
-  useEffect(() => {
-    const shown = localStorage.getItem("followup_alert_date");
-
-    if (todayLeads.length > 0 && shown !== today) {
-      setTimeout(() => {
-        alert(`🔔 You have ${todayLeads.length} follow-ups today`);
-      }, 500);
-
-      localStorage.setItem("followup_alert_date", today);
-    }
-  }, [todayLeads]);
-
   /* FILTER */
   const filteredLeads = useMemo(() => {
     let result = [...leads];
 
-    // 🔥 SOLO vs TEAM FILTER
-    if (mode === "team") {
+    // ✅ SOLO MODE → only my leads
+    if (mode === "solo") {
       result = result.filter(
         l => (l.agentName || "").toLowerCase() === currentUser.toLowerCase()
       );
     }
 
-    // REMOVE FAKE ADMIN
+    // ❌ REMOVE FAKE ADMIN
     result = result.filter(
       l => (l.firstName || "").toLowerCase().trim() !== "admin"
     );
@@ -129,12 +97,22 @@ export default function Dashboard() {
     return result;
   }, [leads, searchQuery, filterParam, mode, currentUser]);
 
+  /* GROUP FOR TEAM MODE */
+  const groupedLeads = useMemo(() => {
+    return filteredLeads.reduce((acc: any, lead) => {
+      const key = lead.agentName || "Unassigned";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(lead);
+      return acc;
+    }, {});
+  }, [filteredLeads]);
+
   return (
     <div className="h-screen flex flex-col bg-[#f5f7fb]">
 
       <Header onAddLead={() => setIsAddModalOpen(true)} />
 
-      {/* 🔥 MODE SWITCH */}
+      {/* 🔥 HIDE THIS WHEN SELLING */}
       <div className="px-3 mt-2">
         <button
           onClick={switchMode}
@@ -146,7 +124,7 @@ export default function Dashboard() {
 
       {/* BULK BAR */}
       {selectedIds.length > 0 && (
-        <div className="mx-3 mt-2 bg-white p-3 rounded-xl shadow flex justify-between items-center">
+        <div className="mx-3 mt-2 bg-white p-3 rounded-xl shadow flex justify-between">
           <span className="text-sm font-semibold">
             {selectedIds.length} selected
           </span>
@@ -176,38 +154,40 @@ export default function Dashboard() {
           <div className="flex justify-center py-20">
             <Loader2 className="animate-spin" />
           </div>
-        ) : filteredLeads.length > 0 ? (
-          filteredLeads.map((lead, idx) => (
+        ) : mode === "team" ? (
 
-            <div key={idx} className="mb-3 space-y-2">
+          Object.keys(groupedLeads).map(agent => (
+            <div key={agent} className="mb-6">
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(lead.id)}
-                  onChange={() => toggleSelect(lead.id)}
-                />
+              <h3 className="text-sm font-bold text-gray-500 mb-2">
+                {agent}
+              </h3>
 
-                <span className="text-sm font-medium text-gray-700">
-                  {lead.firstName || "No Name"}
-                  <span className="text-xs text-gray-400 ml-2">
-                    ({lead.agentName || "Unassigned"})
-                  </span>
-                </span>
+              <div className="space-y-3">
+                {groupedLeads[agent].map((lead: any) => (
+                  <LeadCard
+                    key={lead.id}
+                    lead={lead}
+                    onUpdate={setSelectedLead}
+                  />
+                ))}
               </div>
 
-              <LeadCard 
-                lead={lead} 
-                onUpdate={setSelectedLead} 
-              />
-
             </div>
-
           ))
+
         ) : (
-          <div className="text-center py-20 text-gray-500">
-            No leads found
+
+          <div className="space-y-3">
+            {filteredLeads.map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                onUpdate={setSelectedLead}
+              />
+            ))}
           </div>
+
         )}
 
       </div>
