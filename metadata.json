@@ -1,0 +1,6 @@
+{
+  "name": "LeadPilot",
+  "description": "A mobile-first CRM for real estate agents with Google Sheets sync and lead capture form.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
