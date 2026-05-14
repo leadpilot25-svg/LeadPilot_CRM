@@ -17,6 +17,18 @@
   </head>
   <body>
     <div id="root"></div>
+    code
+Html
+<script>
+  // Clear all old service workers to fix stale cache/blank screens
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for(let registration of registrations) {
+        registration.unregister();
+      }
+    });
+  }
+</script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
